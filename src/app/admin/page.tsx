@@ -62,6 +62,7 @@ export default function AdminPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,7 +98,12 @@ export default function AdminPage() {
       setIdeas(iJson.ideas || []);
       setReviews(rJson.reviews || []);
       setRequests(qJson.requests || []);
+      setAuthorized(true);
     } catch {
+      setAuthorized(false);
+      setIdeas([]);
+      setReviews([]);
+      setRequests([]);
       setError("Couldn’t load moderation queue. Check ADMIN_TOKEN.");
     } finally {
       setLoading(false);
@@ -170,7 +176,9 @@ export default function AdminPage() {
           {error && <div className="mt-3 text-xs text-red-200/80">{error}</div>}
         </div>
 
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+        {authorized ? (
+          <>
+            <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <section className="rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-white">Ideas pending</div>
@@ -240,9 +248,9 @@ export default function AdminPage() {
               )}
             </div>
           </section>
-        </div>
+            </div>
 
-        <div className="mt-4 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 backdrop-blur-xl">
+            <div className="mt-4 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold text-white">Requests pending</div>
             <div className="text-xs text-white/55">{pendingRequests.length}</div>
@@ -283,7 +291,13 @@ export default function AdminPage() {
               ))
             )}
           </div>
-        </div>
+            </div>
+          </>
+        ) : (
+          <div className="mt-8 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 text-sm text-white/70 backdrop-blur-xl">
+            Enter your ADMIN_TOKEN and click <span className="text-white">Load queue</span> to view submissions.
+          </div>
+        )}
       </div>
     </main>
   );

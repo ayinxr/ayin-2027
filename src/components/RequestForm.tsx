@@ -15,11 +15,15 @@ export function RequestForm() {
     setSending(true);
     setStatus(null);
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
       const res = await fetch("/api/requests", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email, subject, message }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const json = (await res.json()) as { ok?: boolean; emailed?: boolean; error?: string };
       if (!res.ok || !json.ok) throw new Error(json.error || "failed");
       setEmail("");
@@ -32,7 +36,7 @@ export function RequestForm() {
           : "Saved. Email sending isn’t configured yet, but your request is recorded for moderation.",
       });
     } catch {
-      setStatus({ ok: false, note: "Couldn’t send that right now. Try again soon." });
+      setStatus({ ok: false, note: "Couldn’t submit that right now. Try again soon." });
     } finally {
       setSending(false);
     }
@@ -88,7 +92,7 @@ export function RequestForm() {
             type="button"
           >
             <Send className="h-4 w-4" />
-            {sending ? "Sending…" : "Send"}
+            {sending ? "Submitting..." : "Submit"}
           </button>
         </div>
 
