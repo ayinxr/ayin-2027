@@ -32,7 +32,8 @@ export async function GET(req: NextRequest) {
 
 const UpdateSchema = z.object({
   id: z.string().min(1),
-  status: z.enum(["approved", "rejected"]),
+  action: z.enum(["set_status", "delete"]),
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -44,6 +45,15 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   const d = db();
+  if (parsed.data.action === "delete") {
+    d.prepare("DELETE FROM review_reactions WHERE review_id = ?").run(parsed.data.id);
+    d.prepare("DELETE FROM reviews WHERE id = ?").run(parsed.data.id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!parsed.data.status) {
+    return NextResponse.json({ error: "Missing status" }, { status: 400 });
+  }
   d.prepare("UPDATE reviews SET status = ? WHERE id = ?").run(parsed.data.status, parsed.data.id);
   return NextResponse.json({ ok: true });
 }

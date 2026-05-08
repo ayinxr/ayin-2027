@@ -5,29 +5,27 @@ import { requireAdmin } from "@/lib/admin";
 
 export const runtime = "nodejs";
 
+const KeySchema = z.enum(["campaign_goals", "community_events", "upcoming_plans"]);
+
 export async function GET(req: NextRequest) {
   const auth = requireAdmin(req);
   if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
   const d = db();
   const rows = d
-    .prepare(
-      `
-      SELECT id, email, subject, message, status, created_at
-      FROM requests
-      ORDER BY created_at DESC
-      LIMIT 300;
-    `,
-    )
-    .all();
+    .prepare("SELECT key, value_json, updated_at FROM managed_content WHERE key IN (?, ?, ?)")
+    .all("campaign_goals", "community_events", "upcoming_plans") as {
+    key: string;
+    value_json: string;
+    updated_at: number;
+  }[];
 
-  return NextResponse.json({ requests: rows });
+  return NextResponse.json({ items: rows });
 }
 
 const UpdateSchema = z.object({
-  id: z.string().min(1),
-  action: z.enum(["set_status", "delete"]),
-  status: z.enum(["pending", "approved", "rejected"]).optional(),
+  key: KeySchema,
+  items: z.array(z.string().min(1).max(180)).max(40),
 });
 
 export async function POST(req: NextRequest) {
@@ -38,16 +36,12 @@ export async function POST(req: NextRequest) {
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
+  const cleaned = parsed.data.items.map((x) => x.trim()).filter(Boolean);
   const d = db();
-  if (parsed.data.action === "delete") {
-    d.prepare("DELETE FROM requests WHERE id = ?").run(parsed.data.id);
-    return NextResponse.json({ ok: true });
-  }
+  d.prepare(
+    "INSERT OR REPLACE INTO managed_content (key, value_json, updated_at) VALUES (?, ?, ?)",
+  ).run(parsed.data.key, JSON.stringify(cleaned), Date.now());
 
-  if (!parsed.data.status) {
-    return NextResponse.json({ error: "Missing status" }, { status: 400 });
-  }
-  d.prepare("UPDATE requests SET status = ? WHERE id = ?").run(parsed.data.status, parsed.data.id);
   return NextResponse.json({ ok: true });
 }
 

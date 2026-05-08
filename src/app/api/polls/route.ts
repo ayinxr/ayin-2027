@@ -1,31 +1,9 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-function ensureSeed() {
-  const d = db();
-  const existing = d.prepare("SELECT COUNT(*) as c FROM polls").get() as { c: number };
-  if (existing.c > 0) return;
-
-  const id = crypto.randomUUID();
-  const question = "What should we vote on first this month?";
-  const options = [
-    "Next spirit day theme",
-    "Lunchtime tournament schedule",
-    "School-wide challenge idea",
-    "Event theme (rally / activity)",
-  ];
-
-  d.prepare(
-    `INSERT INTO polls (id, question, options_json, status, created_at)
-     VALUES (?, ?, ?, 'active', ?)`,
-  ).run(id, question, JSON.stringify(options), Date.now());
-}
-
 export async function GET() {
-  ensureSeed();
   const d = db();
   const polls = d
     .prepare(
