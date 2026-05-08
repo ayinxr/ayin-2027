@@ -75,6 +75,10 @@ export default function AdminPage() {
 
   const pendingIdeas = useMemo(() => ideas.filter((i) => i.status === "pending"), [ideas]);
   const pendingReviews = useMemo(() => reviews.filter((r) => r.status === "pending"), [reviews]);
+  const pendingRequests = useMemo(
+    () => requests.filter((r) => r.status === "pending"),
+    [requests],
+  );
 
   async function refresh() {
     if (!token) return;
@@ -114,6 +118,18 @@ export default function AdminPage() {
 
   async function updateReview(id: string, status: "approved" | "rejected") {
     await fetch("/api/admin/reviews", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ id, status }),
+    });
+    await refresh();
+  }
+
+  async function updateRequest(id: string, status: "approved" | "rejected") {
+    await fetch("/api/admin/requests", {
       method: "POST",
       headers: {
         authorization: `Bearer ${token}`,
@@ -228,20 +244,20 @@ export default function AdminPage() {
 
         <div className="mt-4 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 backdrop-blur-xl">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-white">Request inbox</div>
-            <div className="text-xs text-white/55">{requests.length}</div>
+            <div className="text-sm font-semibold text-white">Requests pending</div>
+            <div className="text-xs text-white/55">{pendingRequests.length}</div>
           </div>
           <p className="mt-2 text-sm text-white/65">
-            Every submission is saved here even if email sending is off.
+            Every request is saved here and can be approved or rejected.
           </p>
 
           <div className="mt-4 space-y-3">
-            {requests.length === 0 ? (
+            {pendingRequests.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/60">
                 No requests yet. Submit one from the main site to test.
               </div>
             ) : (
-              requests.slice(0, 120).map((r) => (
+              pendingRequests.slice(0, 120).map((r) => (
                 <div
                   key={r.id}
                   className="rounded-2xl border border-white/10 bg-[rgba(10,12,18,0.55)] p-4"
@@ -254,6 +270,14 @@ export default function AdminPage() {
                   </div>
                   <div className="mt-1 text-xs text-white/55">from: {r.email}</div>
                   <div className="mt-3 whitespace-pre-wrap text-sm text-white/75">{r.message}</div>
+                  <div className="mt-3 flex items-center gap-2">
+                    <ActionButton tone="approve" onClick={() => void updateRequest(r.id, "approved")}>
+                      Approve
+                    </ActionButton>
+                    <ActionButton tone="reject" onClick={() => void updateRequest(r.id, "rejected")}>
+                      Reject
+                    </ActionButton>
+                  </div>
                   <div className="mt-3 text-[11px] text-white/45">id: {r.id}</div>
                 </div>
               ))
