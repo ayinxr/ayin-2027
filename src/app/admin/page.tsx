@@ -22,6 +22,15 @@ type Review = {
   upvotes: number;
 };
 
+type RequestItem = {
+  id: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: number;
+};
+
 function ActionButton({
   children,
   tone,
@@ -51,6 +60,7 @@ export default function AdminPage() {
   const [token, setToken] = useState("");
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [requests, setRequests] = useState<RequestItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,15 +81,18 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const [iRes, rRes] = await Promise.all([
+      const [iRes, rRes, qRes] = await Promise.all([
         fetch("/api/admin/ideas", { headers: { authorization: `Bearer ${token}` } }),
         fetch("/api/admin/reviews", { headers: { authorization: `Bearer ${token}` } }),
+        fetch("/api/admin/requests", { headers: { authorization: `Bearer ${token}` } }),
       ]);
-      if (!iRes.ok || !rRes.ok) throw new Error("Unauthorized or server error");
+      if (!iRes.ok || !rRes.ok || !qRes.ok) throw new Error("Unauthorized or server error");
       const iJson = (await iRes.json()) as { ideas: Idea[] };
       const rJson = (await rRes.json()) as { reviews: Review[] };
+      const qJson = (await qRes.json()) as { requests: RequestItem[] };
       setIdeas(iJson.ideas || []);
       setReviews(rJson.reviews || []);
+      setRequests(qJson.requests || []);
     } catch {
       setError("Couldn’t load moderation queue. Check ADMIN_TOKEN.");
     } finally {
@@ -211,6 +224,41 @@ export default function AdminPage() {
               )}
             </div>
           </section>
+        </div>
+
+        <div className="mt-4 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.03)] p-6 backdrop-blur-xl">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold text-white">Request inbox</div>
+            <div className="text-xs text-white/55">{requests.length}</div>
+          </div>
+          <p className="mt-2 text-sm text-white/65">
+            Every submission is saved here even if email sending is off.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {requests.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/60">
+                No requests yet. Submit one from the main site to test.
+              </div>
+            ) : (
+              requests.slice(0, 120).map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded-2xl border border-white/10 bg-[rgba(10,12,18,0.55)] p-4"
+                >
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm font-semibold text-white/90">{r.subject}</div>
+                    <div className="text-[11px] text-white/45">
+                      {new Date(r.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-xs text-white/55">from: {r.email}</div>
+                  <div className="mt-3 whitespace-pre-wrap text-sm text-white/75">{r.message}</div>
+                  <div className="mt-3 text-[11px] text-white/45">id: {r.id}</div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </main>
