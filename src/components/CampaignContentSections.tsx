@@ -7,6 +7,7 @@ type ContentPayload = {
   goals: string[];
   events: string[];
   plans: string[];
+  intramuralInfo?: string;
 };
 
 const FALLBACK: ContentPayload = {
@@ -28,6 +29,8 @@ const FALLBACK: ContentPayload = {
     "Open student voting for next month’s spirit day",
     "Publish monthly council transparency update",
   ],
+  intramuralInfo:
+    "intramurals happen once every 2 months everytime with a different sport e.g. Football, Basketball, Volleyball and Tennis. Students are able to cast a vote for which intramural they are looking for every two months.",
 };
 
 export function CampaignContentSections() {
@@ -36,12 +39,15 @@ export function CampaignContentSections() {
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
       .then((r) => r.json())
-      .then((json: ContentPayload) => {
+      .then((json: ContentPayload & { intramuralInfo?: string }) => {
         if (!json) return;
         setContent({
           goals: json.goals?.length ? json.goals : FALLBACK.goals,
           events: json.events?.length ? json.events : FALLBACK.events,
           plans: json.plans?.length ? json.plans : FALLBACK.plans,
+          intramuralInfo: json.intramuralInfo?.trim()
+            ? json.intramuralInfo.trim()
+            : FALLBACK.intramuralInfo,
         });
       })
       .catch(() => null);
@@ -84,6 +90,20 @@ export function CampaignContentSections() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal delay={0.08}>
+          <div
+            id="intramurals"
+            className="mt-10 rounded-3xl border border-white/10 bg-[rgba(255,255,255,0.025)] p-6 backdrop-blur-xl"
+          >
+            <h3 className="font-[var(--font-cinzel)] text-lg text-white sm:text-xl">
+              Sport intramurals
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/75 md:text-base">
+              {content.intramuralInfo}
+            </p>
+          </div>
+        </Reveal>
       </section>
 
       <section id="next-plans" className="relative mx-auto max-w-6xl px-5 py-16 md:py-24">
@@ -106,4 +126,3 @@ export function CampaignContentSections() {
     </>
   );
 }
-

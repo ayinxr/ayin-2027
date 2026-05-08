@@ -79,6 +79,15 @@ export function db() {
       value_json TEXT NOT NULL,
       updated_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS donations (
+      id TEXT PRIMARY KEY,
+      display_name TEXT NOT NULL,
+      amount REAL NOT NULL,
+      note TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at INTEGER NOT NULL
+    );
   `);
 
   const defaults: Record<string, string[]> = {
@@ -120,6 +129,26 @@ export function db() {
         .prepare("INSERT INTO managed_content (key, value_json, updated_at) VALUES (?, ?, ?)")
         .run(key, JSON.stringify(items), Date.now());
     }
+  }
+
+  const intramuralDefault =
+    "intramurals happen once every 2 months everytime with a different sport e.g. Football, Basketball, Volleyball and Tennis. Students are able to cast a vote for which intramural they are looking for every two months.";
+  const intrExists = database
+    .prepare("SELECT 1 FROM managed_content WHERE key = 'intramural_info'")
+    .get() as { 1: number } | undefined;
+  if (!intrExists) {
+    database
+      .prepare("INSERT INTO managed_content (key, value_json, updated_at) VALUES (?, ?, ?)")
+      .run("intramural_info", JSON.stringify({ text: intramuralDefault }), Date.now());
+  }
+
+  const budgetExists = database
+    .prepare("SELECT 1 FROM managed_content WHERE key = 'campaign_budget'")
+    .get() as { 1: number } | undefined;
+  if (!budgetExists) {
+    database
+      .prepare("INSERT INTO managed_content (key, value_json, updated_at) VALUES (?, ?, ?)")
+      .run("campaign_budget", JSON.stringify({ amount: 400, currency: "CAD" }), Date.now());
   }
 
   const pollCount = database.prepare("SELECT COUNT(*) as c FROM polls").get() as { c: number };

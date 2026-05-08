@@ -36,6 +36,9 @@ export default function HomePage() {
               <a className="hover:text-white transition" href="#reviews">
                 Community
               </a>
+              <a className="hover:text-white transition" href="/donate">
+                Donate
+              </a>
               <Button href="#vote" variant="outline" className="px-4 py-2 text-xs">
                 Vote
               </Button>
