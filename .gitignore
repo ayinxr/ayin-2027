@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.DS_Store
+
+# Local DB (persisted on server disk)
+data/campaign.db
+data/campaign.db-*
+
+# Env
+.env
+.env.local
+.env.*.local
+

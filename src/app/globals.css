@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg0: 9 11 16;
+  --bg1: 12 15 22;
+  --fg0: 236 241 255;
+  --fg1: 185 194 215;
+  --glow: 120 163 255;
+  --glow2: 184 120 255;
+  --card: 18 22 33;
+  --stroke: 255 255 255;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 900px at 15% 10%, rgba(var(--glow) / 0.16), transparent 55%),
+    radial-gradient(900px 700px at 85% 20%, rgba(var(--glow2) / 0.12), transparent 60%),
+    radial-gradient(700px 700px at 50% 110%, rgba(80 120 255 / 0.10), transparent 60%),
+    linear-gradient(180deg, rgb(var(--bg0)), rgb(var(--bg1)));
+  color: rgb(var(--fg0));
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(var(--glow) / 0.22);
+}
+
+/* Subtle film grain without lag (static overlay) */
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* Premium scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120 163 255 / 0.35) rgba(255 255 255 / 0.06);
+}
+*::-webkit-scrollbar {
+  width: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(255 255 255 / 0.06);
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(120 163 255 / 0.32);
+  border-radius: 999px;
+  border: 2px solid rgba(0 0 0 / 0);
+  background-clip: padding-box;
+}
+
+@keyframes floatWords {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(36px, -24px, 0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(84px, -58px, 0);
+    opacity: 0;
+  }
+}
+
+.floatingWord {
+  display: inline-block;
+  animation-name: floatWords;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
